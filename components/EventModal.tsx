@@ -7,9 +7,10 @@ interface EventModalProps {
     isDrawing: boolean;
     onSelect: (index: number) => void;
     onFinalize: () => void;
+    giftCount: number; // 추가: 보여줄 선물의 개수
 }
 
-export const EventModal: React.FC<EventModalProps> = ({ drawResult, isDrawing, onSelect, onFinalize }) => {
+export const EventModal: React.FC<EventModalProps> = ({ drawResult, isDrawing, onSelect, onFinalize, giftCount }) => {
     return (
         <div className="fixed inset-0 z-[300] bg-black/95 backdrop-blur-xl flex items-center justify-center p-8 animate-[fadeIn_0.5s_ease-out]">
             <div className="bg-[#1a120b] border-[12px] border-[#d4af37] p-12 rounded-[6rem] max-w-4xl w-full text-center shadow-[0_0_100px_rgba(212,175,55,0.3)] relative overflow-hidden">
@@ -17,15 +18,15 @@ export const EventModal: React.FC<EventModalProps> = ({ drawResult, isDrawing, o
                 <div className="relative z-10">
                     <h2 className="text-7xl font-black text-[#fcd34d] mb-12 italic tracking-tight text-glow">🎁 특별 이벤트 추첨 🎁</h2>
                     {!drawResult ? (
-                        <div className="grid grid-cols-5 gap-8 px-6">
-                            {[0, 1, 2, 3, 4].map(idx => (
+                        <div className="flex justify-center gap-12 px-6">
+                            {Array.from({ length: giftCount }).map((_, idx) => (
                                 <button
                                     key={idx}
                                     onClick={() => onSelect(idx)}
                                     disabled={isDrawing}
-                                    className={`aspect-square flex items-center justify-center rounded-[3rem] border-4 bg-black/60 border-[#d4af37]/40 hover:scale-110 hover:border-white hover:bg-[#d4af37]/20 transition-all shadow-2xl animate-[zoomIn_0.3s_ease-out]`}
+                                    className={`aspect-square w-48 flex items-center justify-center rounded-[3rem] border-4 bg-black/60 border-[#d4af37]/40 hover:scale-110 hover:border-white hover:bg-[#d4af37]/20 transition-all shadow-2xl animate-[zoomIn_0.3s_ease-out]`}
                                 >
-                                    <span className="text-7xl filter drop-shadow-xl">🎁</span>
+                                    <span className="text-[6rem] filter drop-shadow-xl">🎁</span>
                                 </button>
                             ))}
                         </div>

@@ -1,6 +1,7 @@
 
 class AudioService {
   private ctx: AudioContext | null = null;
+  private audioCache: Record<string, HTMLAudioElement> = {};
 
   init() {
     if (!this.ctx) {
@@ -15,7 +16,25 @@ class AudioService {
     }
   }
 
+  // MP3 파일을 재생하는 헬퍼 함수
+  // 사용법: public/audio 폴더에 파일을 넣고 이 함수를 호출하세요.
+  private playFile(filename: string, volume: number = 0.5) {
+    try {
+      if (!this.audioCache[filename]) {
+        this.audioCache[filename] = new Audio(`/audio/${filename}`);
+      }
+      const audio = this.audioCache[filename].cloneNode() as HTMLAudioElement;
+      audio.volume = volume;
+      audio.play().catch(e => console.warn(`오디오 재생 실패 (${filename}):`, e));
+    } catch (e) {
+      console.error("Audio playback error", e);
+    }
+  }
+
   playPew() {
+    // MP3를 사용하려면 아래 주석을 해제하세요:
+    // this.playFile('move.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -33,6 +52,8 @@ class AudioService {
   }
 
   playJump() {
+    // this.playFile('jump.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -50,6 +71,8 @@ class AudioService {
   }
 
   playWin() {
+    // this.playFile('win.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -72,6 +95,8 @@ class AudioService {
   }
 
   playEvent() {
+    // this.playFile('event.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -89,6 +114,8 @@ class AudioService {
   }
 
   playFail() {
+    // this.playFile('fail.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -114,6 +141,8 @@ class AudioService {
   }
 
   playPowerUp() {
+    // this.playFile('powerup.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -135,6 +164,8 @@ class AudioService {
   }
 
   playExplosion() {
+    // this.playFile('explosion.mp3', 0.8); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -171,6 +202,8 @@ class AudioService {
   }
 
   playRegret() {
+    // this.playFile('regret.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -188,6 +221,8 @@ class AudioService {
   }
 
   playBoost() {
+    // this.playFile('boost.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -205,6 +240,8 @@ class AudioService {
   }
 
   playTwinkle() {
+    // this.playFile('twinkle.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -224,6 +261,8 @@ class AudioService {
   }
 
   playSnore() {
+    // this.playFile('snore.mp3'); return;
+
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
     const t = this.ctx.currentTime;
@@ -257,3 +296,4 @@ class AudioService {
 }
 
 export const audioService = new AudioService();
+

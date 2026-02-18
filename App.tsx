@@ -22,6 +22,7 @@ const App: React.FC = () => {
     finalizeEvent,
     showEventModal,
     drawResult,
+    shuffledEvents, // 추가
     isDrawing,
     stateStack,
     validTarget,
@@ -113,6 +114,7 @@ const App: React.FC = () => {
           isDrawing={isDrawing}
           onSelect={handleEventSelection}
           onFinalize={finalizeEvent}
+          giftCount={shuffledEvents.length}
         />
       )}
 

@@ -60,12 +60,14 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                         key={id}
                         onClick={() => onNodeClick(nodeId)}
                         className={`absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-all cursor-pointer z-10 
-              ${isCorner ? 'w-[6%] h-[6%] rounded-2xl rotate-45 border-[#d4af37]/60' : 'w-[4.5%] h-[4.5%] rounded-full border-[#d4af37]/20'} 
-              border-2 
-              ${isTarget ? 'bg-white scale-150 z-50 shadow-[0_0_40px_white] border-white animate-pulse' : 'bg-[#1a120b] hover:border-white/50'}`}
+               ${isCorner ? 'w-[6%] h-[6%] rounded-2xl rotate-45 border-[#d4af37]/60' : 'w-[4.5%] h-[4.5%] rounded-full border-[#d4af37]/20'} 
+               ${isTrial ? 'w-[10%] h-[10%] z-20 shadow-[0_0_40px_rgba(239,68,68,0.8)] border-red-500 bg-red-950/40 animate-pulse' : ''}
+               ${isSupport ? 'w-[10%] h-[10%] z-20 shadow-[0_0_40px_rgba(255,105,180,0.8)] border-pink-500 bg-pink-950/40 animate-bounce' : ''}
+               border-2 
+               ${isTarget ? 'bg-white scale-[1.8] z-50 shadow-[0_0_40px_white] border-white animate-pulse' : 'bg-[#1a120b] hover:border-white/50'}`}
                         style={{ left: `${coord.x}%`, top: `${coord.y}%` }}
                     >
-                        <div className={`${isCorner ? '-rotate-45' : ''} text-[1.5cqw] opacity-80`}>
+                        <div className={`${isCorner ? '-rotate-45' : ''} ${isTrial || isSupport ? 'text-[3.5cqw]' : 'text-[1.5cqw]'} opacity-100`}>
                             {isEvent && "🧧"} {isTrial && "🧨"} {isSupport && "💑"}
                         </div>
                     </div>

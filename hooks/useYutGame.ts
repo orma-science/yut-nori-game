@@ -175,6 +175,37 @@ export const useYutGame = () => {
                     history: ["이벤트: 동면에 빠져 다음 턴을 쉽니다.", ...state.history]
                 };
             }
+        },
+        {
+            id: 6, title: "🔄 운명의 장난", description: "가장 앞서가는 상대 말과 위치를 바꿉니다!", action: (pid, state) => {
+                const myPiece = state.pieces.find(x => x.id === pid);
+                if (!myPiece) return {};
+
+                // 내 팀을 제외한 다른 팀들의 말 중 가장 앞선 것(position이 가장 큰 것, 0 제외 - 0은 골이거나 시작전일수있는데 로직상 판위에만 있음)
+                // 윷놀이판 번호 체계상 1-28까지 있으며 0은 골지점이므로, 0이 아닌 것 중 가장 앞선 것을 찾음
+                // 실제 골에 가까운 순서는 경로에 따라 다르지만, 여기서는 단순 position 값으로 판단하거나 
+                // 더 정확하게는 calculateTargetNode가 사용되는 경로 인덱스로 판단해야 함.
+                // 편의상 position이 높은 순으로 하되 20번대 노드(지름길) 고려
+                const opponents = state.pieces.filter(p => p.teamId !== myPiece.teamId);
+                if (opponents.length === 0) {
+                    return { history: ["교환할 상대가 없어 보너스 점프를 얻었습니다!", ...state.history], pendingMoves: [...state.pendingMoves, 'DO'] };
+                }
+
+                const target = opponents.sort((a, b) => b.position - a.position)[0];
+                const myPrevPos = myPiece.position;
+                const targetPrevPos = target.position;
+
+                audioService.playTwinkle();
+                return {
+                    pieces: state.pieces.map(p => {
+                        if (p.id === pid) return { ...p, position: targetPrevPos };
+                        if (p.id === target.id) return { ...p, position: myPrevPos };
+                        return p;
+                    }),
+                    history: [`이벤트: ${target.teamId}팀의 말과 위치를 교환했습니다!`, ...state.history],
+                    eventBanner: "🔄 위치 대전환! 🔄"
+                };
+            }
         }
     ], [executeMove]);
 
@@ -303,7 +334,9 @@ export const useYutGame = () => {
         }
 
         if (isEvent) {
-            setShuffledEvents([...eventListWithActions].sort(() => Math.random() - 0.5));
+            // 전체 6개 이벤트 중 무작위로 3개만 선정
+            const selected = [...eventListWithActions].sort(() => Math.random() - 0.5).slice(0, 3);
+            setShuffledEvents(selected);
             let targetPid = gameState.selectedPieceId!;
             if (targetPid === 'new') {
                 const lastAdded = (updates.pieces || gameState.pieces)[(updates.pieces || gameState.pieces).length - 1];
@@ -315,7 +348,7 @@ export const useYutGame = () => {
         }
 
         pushState(newState);
-        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, screenShake: false, showExplosion: null })), 2000);
+        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, screenShake: false, showExplosion: null })), 4000);
     }, [gameState, executeMove, eventListWithActions, pushState, getPrediction]);
 
     const finalizeEvent = useCallback(() => {
@@ -323,10 +356,50 @@ export const useYutGame = () => {
 
         const updates = drawResult.action(eventTargetPieceId, gameState);
         let newState = { ...gameState, ...updates };
+
+        const movedPiece = newState.pieces.find(p => p.id === eventTargetPieceId);
+        const newPos = movedPiece?.position;
+
+        if (typeof newPos === 'number') {
+            const isTrial = newPos === gameState.specialNodes.hellNode;
+            const isSupport = newPos === gameState.specialNodes.upNode;
+            const isEvent = gameState.specialNodes.eventNodes.includes(newPos);
+
+            if (isTrial) {
+                audioService.playExplosion();
+                const coord = NODE_COORDS[newPos];
+                newState.showExplosion = { x: coord.x, y: coord.y };
+                const piecesToReturn = [...newState.pieces];
+                const returns: Record<string, number> = {};
+                piecesToReturn.forEach(p => {
+                    returns[p.teamId] = (returns[p.teamId] || 0) + p.stackCount;
+                });
+                newState.pieces = [];
+                newState.teams = newState.teams.map(t => ({
+                    ...t,
+                    piecesAtHome: t.piecesAtHome + (returns[t.id] || 0)
+                }));
+                newState.eventBanner = "💥 대폭발! 모두 집으로! 💥";
+                newState.screenShake = true;
+                newState.history = ["⚠️ 폭약을 밟았습니다! 콰광!!!", ...newState.history];
+            } else if (isSupport) {
+                audioService.playPowerUp();
+                const p = newState.pieces.find(pc => pc.position === newPos && pc.teamId === gameState.teams[gameState.currentTeamIndex].id);
+                if (p && newState.teams[gameState.currentTeamIndex].piecesAtHome > 0) {
+                    p.stackCount += 1;
+                    newState.teams = newState.teams.map(t => t.id === p.teamId ? { ...t, piecesAtHome: t.piecesAtHome - 1 } : t);
+                    newState.eventBanner = "💑 춘향이 업고 놀자! 💑";
+                }
+            }
+        }
+
+        const originalCatch = gameState.history[0]?.includes("잡았습니다") || gameState.history[0]?.includes("한 번 더");
         const caughtInEvent = updates.history?.[0]?.includes("한 번 더") || updates.history?.[0]?.includes("잡았습니다");
         const bonusThrowInEvent = drawResult.id === 3;
 
-        const shouldSwitch = newState.pendingMoves.length === 0 && !caughtInEvent && !bonusThrowInEvent;
+        // 턴 전환 여부 결정: 남은 이동권이 없고, 상대를 잡지 않았고(원래 혹은 이벤트), 보너스 던지기가 아닐 때
+        const shouldSwitch = newState.pendingMoves.length === 0 && !originalCatch && !caughtInEvent && !bonusThrowInEvent;
+
         if (shouldSwitch) {
             let nextIndex = (gameState.currentTeamIndex + 1) % gameState.teams.length;
             let skipList = [...(newState.skipNextTurnTeamIds || [])];
@@ -341,9 +414,12 @@ export const useYutGame = () => {
             newState.currentTeamIndex = nextIndex;
         }
 
-        setShowEventModal(false); setDrawResult(null); setEventTargetPieceId(null);
+        setShowEventModal(false);
+        setDrawResult(null);
+        setEventTargetPieceId(null);
+
         pushState(newState);
-        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, screenShake: false, showExplosion: null })), 2000);
+        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, screenShake: false, showExplosion: null })), 4000);
     }, [drawResult, eventTargetPieceId, gameState, pushState]);
 
     const handleEventSelection = useCallback((index: number) => {
@@ -399,6 +475,7 @@ export const useYutGame = () => {
         finalizeEvent,
         showEventModal,
         drawResult,
+        shuffledEvents, // 추가
         isDrawing,
         stateStack,
         validTarget,
