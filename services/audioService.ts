@@ -18,7 +18,7 @@ class AudioService {
 
   // MP3 파일을 재생하는 헬퍼 함수
   // 사용법: public/audio 폴더에 파일을 넣고 이 함수를 호출하세요.
-  private playFile(filename: string, volume: number = 0.5) {
+  private playFile(filename: string, volume: number = 0.8) {
     try {
       if (!this.audioCache[filename]) {
         this.audioCache[filename] = new Audio(`/audio/${filename}`);
@@ -33,7 +33,7 @@ class AudioService {
 
   playPew() {
     // MP3를 사용하려면 아래 주석을 해제하세요:
-    // this.playFile('move.mp3'); return;
+    this.playFile('move.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -43,7 +43,7 @@ class AudioService {
     osc.type = 'square';
     osc.frequency.setValueAtTime(880, t);
     osc.frequency.exponentialRampToValueAtTime(110, t + 0.15);
-    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.setValueAtTime(0.3, t);
     gain.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -52,7 +52,7 @@ class AudioService {
   }
 
   playJump() {
-    // this.playFile('jump.mp3'); return;
+    this.playFile('jump.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -62,7 +62,7 @@ class AudioService {
     osc.type = 'triangle';
     osc.frequency.setValueAtTime(300, t);
     osc.frequency.linearRampToValueAtTime(500, t + 0.1);
-    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.setValueAtTime(0.3, t);
     gain.gain.linearRampToValueAtTime(0, t + 0.1);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -71,7 +71,7 @@ class AudioService {
   }
 
   playWin() {
-    // this.playFile('win.mp3'); return;
+    this.playFile('win.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -85,7 +85,7 @@ class AudioService {
       osc.frequency.setValueAtTime(f, startTime);
       osc.frequency.linearRampToValueAtTime(f + 200, startTime + 0.4);
       gain.gain.setValueAtTime(0, startTime);
-      gain.gain.linearRampToValueAtTime(0.08, startTime + 0.05);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
       gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
       osc.connect(gain);
       gain.connect(this.ctx!.destination);
@@ -95,7 +95,7 @@ class AudioService {
   }
 
   playEvent() {
-    // this.playFile('event.mp3'); return;
+    this.playFile('event.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -105,7 +105,7 @@ class AudioService {
     osc.type = 'sine';
     osc.frequency.setValueAtTime(440, t);
     osc.frequency.linearRampToValueAtTime(880, t + 0.1);
-    gain.gain.setValueAtTime(0.1, t);
+    gain.gain.setValueAtTime(0.3, t);
     gain.gain.exponentialRampToValueAtTime(0.01, t + 0.3);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -114,7 +114,7 @@ class AudioService {
   }
 
   playFail() {
-    // this.playFile('fail.mp3'); return;
+    this.playFile('fail.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -128,7 +128,7 @@ class AudioService {
     osc1.frequency.exponentialRampToValueAtTime(50, t + 1.2);
     osc2.frequency.setValueAtTime(190, t);
     osc2.frequency.exponentialRampToValueAtTime(45, t + 1.2);
-    gain.gain.setValueAtTime(0.15, t);
+    gain.gain.setValueAtTime(0.4, t);
     gain.gain.linearRampToValueAtTime(0.15, t + 0.8);
     gain.gain.linearRampToValueAtTime(0, t + 1.2);
     osc1.connect(gain);
@@ -141,7 +141,7 @@ class AudioService {
   }
 
   playPowerUp() {
-    // this.playFile('powerup.mp3'); return;
+    this.playFile('powerup.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -164,7 +164,7 @@ class AudioService {
   }
 
   playExplosion() {
-    // this.playFile('explosion.mp3', 0.8); return;
+    this.playFile('explosion.mp3', 0.9); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -176,7 +176,7 @@ class AudioService {
     osc.type = 'sawtooth';
     osc.frequency.setValueAtTime(100, t);
     osc.frequency.exponentialRampToValueAtTime(0.01, t + 1.5);
-    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.setValueAtTime(0.8, t);
     gain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -193,7 +193,7 @@ class AudioService {
     const noise = this.ctx.createBufferSource();
     noise.buffer = buffer;
     const noiseGain = this.ctx.createGain();
-    noiseGain.gain.setValueAtTime(0.3, t);
+    noiseGain.gain.setValueAtTime(0.8, t);
     noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 1.5);
     noise.connect(noiseGain);
     noiseGain.connect(this.ctx.destination);
@@ -202,7 +202,7 @@ class AudioService {
   }
 
   playRegret() {
-    // this.playFile('regret.mp3'); return;
+    this.playFile('regret.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -221,7 +221,7 @@ class AudioService {
   }
 
   playBoost() {
-    // this.playFile('boost.mp3'); return;
+    this.playFile('boost.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -240,7 +240,7 @@ class AudioService {
   }
 
   playTwinkle() {
-    // this.playFile('twinkle.mp3'); return;
+    this.playFile('twinkle.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -261,7 +261,7 @@ class AudioService {
   }
 
   playSnore() {
-    // this.playFile('snore.mp3'); return;
+    this.playFile('snore.mp3'); return;
 
     this.init();
     if (!this.ctx || this.ctx.state === 'suspended') return;
@@ -292,6 +292,47 @@ class AudioService {
     lfo.start(t);
     osc.stop(t + 0.8);
     lfo.stop(t + 0.8);
+  }
+
+  playCombo(count: number) {
+    this.init();
+    if (!this.ctx || this.ctx.state === 'suspended') return;
+    const t = this.ctx.currentTime;
+    const baseFreq = 440;
+    const freq = baseFreq * Math.pow(1.2, count - 1);
+
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(freq, t);
+    osc.frequency.exponentialRampToValueAtTime(freq * 1.5, t + 0.1);
+
+    gain.gain.setValueAtTime(0.3, t);
+    gain.gain.exponentialRampToValueAtTime(0.01, t + 0.2);
+
+    osc.connect(gain);
+    gain.connect(this.ctx.destination);
+    osc.start(t);
+    osc.stop(t + 0.2);
+  }
+
+  playLaugh() {
+    this.init();
+    if (!this.ctx || this.ctx.state === 'suspended') return;
+    const t = this.ctx.currentTime;
+    // 유쾌한 스타카토 음계로 웃음소리 흉내
+    [523, 659, 783, 523, 659, 783].forEach((f, i) => {
+      const osc = this.ctx!.createOscillator();
+      const gain = this.ctx!.createGain();
+      const start = t + (i * 0.1);
+      osc.frequency.setValueAtTime(f, start);
+      gain.gain.setValueAtTime(0.2, start);
+      gain.gain.exponentialRampToValueAtTime(0.01, start + 0.08);
+      osc.connect(gain);
+      gain.connect(this.ctx!.destination);
+      osc.start(start);
+      osc.stop(start + 0.08);
+    });
   }
 }
 
