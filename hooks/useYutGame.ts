@@ -1,6 +1,6 @@
 
 import { useState, useCallback, useMemo } from 'react';
-import { GameState, Team, TeamId, YutResult, SpecialNodes, EventDraw } from '../types';
+import { GameState, Team, TeamId, YutResult, SpecialNodes, EventDraw, SetupConfig } from '../types';
 import { YUT_VALUES, TEAM_EMOJIS, calculateTargetNode, getRoutePath, NODE_COORDS } from '../constants';
 import { audioService } from '../services/audioService';
 
@@ -19,14 +19,28 @@ const createInitialGameState = (): GameState => ({
     maxPieces: 4,
     specialNodes: { eventNodes: [], hellNode: -1, upNode: -1 },
     skipNextTurnTeamIds: [],
-    showExplosion: null
+    showExplosion: null,
+    showBonusBanner: false,
+    comboCount: 0,
+    victoryTeamName: null,
+    endingQuote: null,
+    theme: 'traditional',
+    mvp: null,
+    snackMoney: '',
+    showSnackModal: false
 });
 
 export const useYutGame = () => {
     const [gameState, setGameState] = useState<GameState>(createInitialGameState());
     const [stateStack, setStateStack] = useState<GameState[]>([]);
 
-    const [setupConfig, setSetupConfig] = useState({ teamCount: 2, pieceCount: 4 });
+    const [setupConfig, setSetupConfig] = useState<SetupConfig>({
+        teamCount: 2,
+        pieceCount: 4,
+        teamNames: ['', '', '', ''],
+        eventCount: 3,
+        snackMoney: ''
+    });
     const [showEventModal, setShowEventModal] = useState(false);
     const [eventTargetPieceId, setEventTargetPieceId] = useState<string | null>(null);
     const [drawResult, setDrawResult] = useState<EventDraw | null>(null);
@@ -34,13 +48,13 @@ export const useYutGame = () => {
     const [shuffledEvents, setShuffledEvents] = useState<EventDraw[]>([]);
 
     // 이벤트 노드 랜덤 생성 함수
-    const getRandomSpecialNodes = useCallback((): SpecialNodes => {
+    const getRandomSpecialNodes = useCallback((eCount: number = 3): SpecialNodes => {
         const available = Array.from({ length: 28 }, (_, i) => i + 1).filter(i => ![5, 10, 15, 22].includes(i));
         const shuffled = [...available].sort(() => Math.random() - 0.5);
         return {
-            eventNodes: shuffled.slice(0, 5),
-            hellNode: shuffled[5],
-            upNode: shuffled[6]
+            eventNodes: shuffled.slice(0, eCount),
+            hellNode: shuffled[eCount],
+            upNode: shuffled[eCount + 1]
         };
     }, []);
 
@@ -58,18 +72,55 @@ export const useYutGame = () => {
 
         if (target === 'GOAL') {
             audioService.playWin();
+            const finishedCount = nextTeams.filter(t => t.piecesFinished > 0 || (t.rank !== undefined)).length;
             let stack = 1;
+            let victoryName = null;
             if (pid === 'new') {
-                nextTeams = nextTeams.map(t => t.id === team.id ? { ...t, piecesAtHome: t.piecesAtHome - 1, piecesFinished: t.piecesFinished + 1 } : t);
+                nextTeams = nextTeams.map(t => {
+                    if (t.id === team.id) {
+                        const newFinished = t.piecesFinished + 1;
+                        const isAllFinished = newFinished >= stateRef.maxPieces;
+                        const currentMaxRank = Math.max(0, ...nextTeams.map(tt => tt.rank || 0));
+                        const assignedRank = isAllFinished ? currentMaxRank + 1 : undefined;
+                        if (assignedRank === 1) victoryName = t.name;
+                        return {
+                            ...t,
+                            piecesAtHome: t.piecesAtHome - 1,
+                            piecesFinished: newFinished,
+                            rank: assignedRank
+                        };
+                    }
+                    return t;
+                });
             } else {
                 const idx = nextPieces.findIndex(p => p.id === pid);
                 if (idx !== -1) {
                     stack = nextPieces[idx].stackCount;
                     nextPieces.splice(idx, 1);
-                    nextTeams = nextTeams.map(t => t.id === team.id ? { ...t, piecesFinished: t.piecesFinished + stack } : t);
+                    nextTeams = nextTeams.map(t => {
+                        if (t.id === team.id) {
+                            const newFinished = t.piecesFinished + stack;
+                            const isAllFinished = newFinished >= stateRef.maxPieces;
+                            const currentMaxRank = Math.max(0, ...nextTeams.map(tt => tt.rank || 0));
+                            const assignedRank = isAllFinished ? currentMaxRank + 1 : undefined;
+                            if (assignedRank === 1) victoryName = t.name;
+                            return {
+                                ...t,
+                                piecesFinished: newFinished,
+                                rank: assignedRank
+                            };
+                        }
+                        return t;
+                    });
                 }
             }
             historyMsg = `${team.name}: ${stack}동이가 완주하였습니다! 🏁`;
+            return {
+                pieces: nextPieces,
+                teams: nextTeams,
+                history: [historyMsg, ...stateRef.history].slice(0, 30),
+                victoryTeamName: victoryName
+            };
         } else {
             const targetPos = target as number;
             const existingAtTargetIdx = nextPieces.findIndex(p => p.position === targetPos);
@@ -83,7 +134,11 @@ export const useYutGame = () => {
                         historyMsg = `${team.name}: 동료를 업고 나아갑니다.`;
                     } else {
                         caughtEnemy = true;
-                        nextTeams = nextTeams.map(t => t.id === targetPiece.teamId ? { ...t, piecesAtHome: t.piecesAtHome + targetPiece.stackCount } : t);
+                        nextTeams = nextTeams.map(t => {
+                            if (t.id === targetPiece.teamId) return { ...t, piecesAtHome: t.piecesAtHome + targetPiece.stackCount };
+                            if (t.id === team.id) return { ...t, catchCount: t.catchCount + 1 };
+                            return t;
+                        });
                         nextPieces.splice(existingAtTargetIdx, 1);
                         nextPieces.push({ id: `P-${Date.now()}`, teamId: team.id, position: targetPos, stackCount: 1 });
                         historyMsg = `${team.name}: 상대의 말을 잡아 한 번 더!`;
@@ -104,7 +159,11 @@ export const useYutGame = () => {
                             historyMsg = `${team.name}: 세력을 합쳤습니다.`;
                         } else {
                             caughtEnemy = true;
-                            nextTeams = nextTeams.map(t => t.id === targetPiece.teamId ? { ...t, piecesAtHome: t.piecesAtHome + targetPiece.stackCount } : t);
+                            nextTeams = nextTeams.map(t => {
+                                if (t.id === targetPiece.teamId) return { ...t, piecesAtHome: t.piecesAtHome + targetPiece.stackCount };
+                                if (t.id === team.id) return { ...t, catchCount: t.catchCount + 1 };
+                                return t;
+                            });
                             nextPieces.splice(existingAtTargetIdx, 1);
                             selfPiece.position = targetPos;
                             historyMsg = `${team.name}: 상대의 말을 잡았습니다!`;
@@ -121,7 +180,8 @@ export const useYutGame = () => {
             pieces: nextPieces,
             teams: nextTeams,
             history: [historyMsg, ...stateRef.history].slice(0, 30),
-            screenShake: caughtEnemy
+            screenShake: false, // Point 4: 잡았을 때 흔들림 제거
+            victoryTeamName: null
         };
     }, []);
 
@@ -155,7 +215,8 @@ export const useYutGame = () => {
         },
         {
             id: 4, title: "😱 강제 귀가 조치", description: "말이 집으로 강제 소환됩니다.", action: (pid, state) => {
-                const p = state.pieces.find(x => x.id === pid)!;
+                const p = state.pieces.find(x => x.id === pid);
+                if (!p) return {};
                 audioService.playFail();
                 return {
                     pieces: state.pieces.filter(x => x.id !== pid),
@@ -206,6 +267,55 @@ export const useYutGame = () => {
                     eventBanner: "🔄 위치 대전환! 🔄"
                 };
             }
+        },
+        {
+            id: 7, title: "🚀 오르마 워프", description: "가장 뒤처진 팀을 중앙으로 불러옵니다!", action: (pid, state) => {
+                audioService.playPowerUp();
+                // 가장 뒤처진 팀 = 집에 말이 가장 많은 팀
+                const maxHome = Math.max(...state.teams.filter(t => t.rank === undefined).map(t => t.piecesAtHome));
+                if (maxHome === 0) return { history: ["모든 팀이 이미 출발했습니다!", ...state.history] };
+
+                // 해당되는 팀들 (동점자 포함)
+                let laggingTeams = state.teams.filter(t => t.rank === undefined && t.piecesAtHome === maxHome);
+
+                // 내 팀 다음 순서부터 정렬 (순차적 배치 위해)
+                const myIdx = state.currentTeamIndex;
+                laggingTeams.sort((a, b) => {
+                    const aIdx = state.teams.findIndex(t => t.id === a.id);
+                    const bIdx = state.teams.findIndex(t => t.id === b.id);
+                    const aDist = (aIdx - myIdx + state.teams.length) % state.teams.length;
+                    const bDist = (bIdx - myIdx + state.teams.length) % state.teams.length;
+                    return aDist - bDist;
+                });
+
+                const newPieces = [...state.pieces];
+                const newTeams = state.teams.map(t => {
+                    const lagIdx = laggingTeams.findIndex(lt => lt.id === t.id);
+                    if (lagIdx !== -1) {
+                        // 중앙 위치: 22(정중앙), 23, 24...(순차적으로)
+                        const targetPos = 22 + lagIdx;
+                        newPieces.push({ id: `WARP-${Date.now()}-${t.id}`, teamId: t.id, position: targetPos, stackCount: 1 });
+                        return { ...t, piecesAtHome: t.piecesAtHome - 1 };
+                    }
+                    return t;
+                });
+
+                return {
+                    pieces: newPieces,
+                    teams: newTeams,
+                    eventBanner: "🚀 워프 가동! 🚀",
+                    history: ["이벤트: 뒤처진 팀들이 전략적 요충지로 워프했습니다!", ...state.history]
+                };
+            }
+        },
+        {
+            id: 8, title: "🍿 간식 쏜다!", description: "게임의 흥을 돋우기 위해 간식비를 냅니다.", action: (pid, state) => {
+                audioService.playTwinkle();
+                return {
+                    showSnackModal: true,
+                    history: [`이벤트: 오늘 간식은 ${state.teams[state.currentTeamIndex].name}팀이 쏘기로 했습니다!`, ...state.history]
+                };
+            }
         }
     ], [executeMove]);
 
@@ -238,12 +348,12 @@ export const useYutGame = () => {
             setGameState({
                 ...freshState,
                 history: ['판을 다시 차렸습니다. 새로운 마음으로 시작하세요!'],
-                specialNodes: getRandomSpecialNodes()
+                specialNodes: getRandomSpecialNodes(setupConfig.eventCount)
             });
             setStateStack([]);
             audioService.playJump();
         }
-    }, [getRandomSpecialNodes]);
+    }, [getRandomSpecialNodes, setupConfig.eventCount]);
 
     const inputYutResult = useCallback((result: YutResult) => {
         if (gameState.isMoving || showEventModal) return;
@@ -260,6 +370,20 @@ export const useYutGame = () => {
             nextState.pendingMoves.push(result);
             nextState.activeMoveIndex = nextState.pendingMoves.length - 1;
             nextState.history = [`${team.name}: ${getYutLabel(result)}를 던졌습니다.`, ...gameState.history];
+
+            // Point 8: 첫 번째 말은 자동 선택 ('말 올리기' 생략)
+            if (!hasOnBoard && nextState.pendingMoves.length === 1) {
+                nextState.selectedPieceId = 'new';
+            }
+
+            // 윷이나 모가 나오면 보너스 배너 표시 및 콤보 증가
+            if (result === 'YUT' || result === 'MO') {
+                const nextCombo = nextState.comboCount + 1;
+                nextState.comboCount = nextCombo;
+                nextState.showBonusBanner = true;
+                audioService.playCombo(nextCombo);
+                setTimeout(() => setGameState(s => ({ ...s, showBonusBanner: false })), 2000);
+            }
         }
         pushState(nextState);
     }, [gameState, showEventModal, pushState]);
@@ -301,54 +425,103 @@ export const useYutGame = () => {
                 piecesAtHome: t.piecesAtHome + (returns[t.id] || 0)
             }));
 
-            newState.eventBanner = "💥 대폭발! 모두 집으로! 💥";
+            newState.eventBanner = "🕳️ 블랙홀! 모두 집으로! 🕳️";
             newState.screenShake = true;
-            newState.history = ["⚠️ 폭약을 밟았습니다! 콰광!!!", ...newState.history];
+            newState.history = ["🕳️ 블랙홀에 빨려들어갔다! 모두 집으로!", ...newState.history];
         } else if (isSupport) {
             audioService.playPowerUp();
             const p = newState.pieces.find(pc => pc.position === target && pc.teamId === gameState.teams[gameState.currentTeamIndex].id);
             if (p && newState.teams[gameState.currentTeamIndex].piecesAtHome > 0) {
                 p.stackCount += 1;
                 newState.teams = newState.teams.map(t => t.id === p.teamId ? { ...t, piecesAtHome: t.piecesAtHome - 1 } : t);
-                newState.eventBanner = "💑 춘향이 업고 놀자! 💑";
+                newState.eventBanner = " 아싸! 업고 가자 💑"; // Point 7: 메시지 변경
             }
         }
 
-        const shouldSwitch = newState.pendingMoves.length === 0 && !caughtEnemy && !isEvent;
+        const currentTeamAfterMove = newState.teams[gameState.currentTeamIndex];
+        const hasFinished = currentTeamAfterMove.rank !== undefined;
+
+        if (hasFinished) {
+            newState.pendingMoves = [];
+        }
+
+        const shouldSwitch = (newState.pendingMoves.length === 0 && !caughtEnemy && !isEvent) || hasFinished;
 
         if (shouldSwitch) {
             let nextIndex = (gameState.currentTeamIndex + 1) % gameState.teams.length;
             let skipList = [...(newState.skipNextTurnTeamIds || [])];
 
-            // Skip turn logic
-            while (skipList.includes(gameState.teams[nextIndex].id)) {
-                const idx = skipList.indexOf(gameState.teams[nextIndex].id);
-                if (idx > -1) skipList.splice(idx, 1);
-
-                newState.history = [`${gameState.teams[nextIndex].name}: 동면 중이라 턴을 건너뜁니다.`, ...(newState.history || [])];
-
-                nextIndex = (nextIndex + 1) % gameState.teams.length;
+            let attempts = 0;
+            while (attempts < newState.teams.length) {
+                const nextTeam = newState.teams[nextIndex];
+                if (nextTeam.rank !== undefined) {
+                    nextIndex = (nextIndex + 1) % newState.teams.length;
+                    attempts++;
+                    continue;
+                }
+                if (skipList.includes(nextTeam.id)) {
+                    const idx = skipList.indexOf(nextTeam.id);
+                    if (idx > -1) skipList.splice(idx, 1);
+                    newState.history = [`${nextTeam.name}: 동면 중이라 턴을 건너뜁니다.`, ...(newState.history || [])];
+                    nextIndex = (nextIndex + 1) % newState.teams.length;
+                    attempts++;
+                    continue;
+                }
+                break;
             }
             newState.skipNextTurnTeamIds = skipList;
             newState.currentTeamIndex = nextIndex;
+            newState.comboCount = 0; // 턴이 넘어가면 콤보 초기화
+        }
+
+        // 게임 종료 체크: 한 팀 빼고 모두 완주했는가?
+        const activeTeams = newState.teams.filter(t => t.rank === undefined);
+        if (activeTeams.length <= 1) {
+            newState.status = 'finished';
+            // MVP 선정 (잡기 횟수 기준)
+            const sortedByCatch = [...newState.teams].sort((a, b) => b.catchCount - a.catchCount);
+            const topCatcher = sortedByCatch[0];
+            if (topCatcher && topCatcher.catchCount > 0) {
+                newState.mvp = {
+                    name: topCatcher.name,
+                    emoji: topCatcher.emoji,
+                    reason: `상대 팀 말을 ${topCatcher.catchCount}번이나 잡은 명사수!`
+                };
+            }
+        }
+
+        if (caughtEnemy) {
+            const nextCombo = newState.comboCount + 1;
+            newState.comboCount = nextCombo;
+            newState.showBonusBanner = true;
+            audioService.playCombo(nextCombo);
+            setTimeout(() => setGameState(s => ({ ...s, showBonusBanner: false })), 2000);
         }
 
         if (isEvent) {
             // 전체 6개 이벤트 중 무작위로 3개만 선정
             const selected = [...eventListWithActions].sort(() => Math.random() - 0.5).slice(0, 3);
             setShuffledEvents(selected);
-            let targetPid = gameState.selectedPieceId!;
-            if (targetPid === 'new') {
-                const lastAdded = (updates.pieces || gameState.pieces)[(updates.pieces || gameState.pieces).length - 1];
-                targetPid = lastAdded.id;
+            // Point: 이벤트 대상 말 찾기 (합쳐졌을 수도 있으므로 위치 기반으로 탐색)
+            const currentTeamId = newState.teams[gameState.currentTeamIndex].id;
+            const pieceAtTarget = newState.pieces.find(p => p.position === target && p.teamId === currentTeamId);
+
+            if (pieceAtTarget) {
+                setEventTargetPieceId(pieceAtTarget.id);
+                setShowEventModal(true);
+                audioService.playEvent();
             }
-            setEventTargetPieceId(targetPid);
-            setShowEventModal(true);
-            audioService.playEvent();
         }
 
         pushState(newState);
-        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, screenShake: false, showExplosion: null })), 4000);
+
+        if (newState.victoryTeamName) {
+            setTimeout(() => setGameState(s => ({ ...s, victoryTeamName: null })), 4000);
+        }
+
+        // 폭발(블랙홀) 이벤트: 화면 흔들림 3.5초, 배너/폭발 효과 4초
+        setTimeout(() => setGameState(s => ({ ...s, screenShake: false })), 3500);
+        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, showExplosion: null })), 4000);
     }, [gameState, executeMove, eventListWithActions, pushState, getPrediction]);
 
     const finalizeEvent = useCallback(() => {
@@ -379,16 +552,16 @@ export const useYutGame = () => {
                     ...t,
                     piecesAtHome: t.piecesAtHome + (returns[t.id] || 0)
                 }));
-                newState.eventBanner = "💥 대폭발! 모두 집으로! 💥";
+                newState.eventBanner = "🕳️ 블랙홀! 모두 집으로! 🕳️";
                 newState.screenShake = true;
-                newState.history = ["⚠️ 폭약을 밟았습니다! 콰광!!!", ...newState.history];
+                newState.history = ["🕳️ 블랙홀에 빨려들어갔다! 모두 집으로!", ...newState.history];
             } else if (isSupport) {
                 audioService.playPowerUp();
                 const p = newState.pieces.find(pc => pc.position === newPos && pc.teamId === gameState.teams[gameState.currentTeamIndex].id);
                 if (p && newState.teams[gameState.currentTeamIndex].piecesAtHome > 0) {
                     p.stackCount += 1;
                     newState.teams = newState.teams.map(t => t.id === p.teamId ? { ...t, piecesAtHome: t.piecesAtHome - 1 } : t);
-                    newState.eventBanner = "💑 춘향이 업고 놀자! 💑";
+                    newState.eventBanner = "아싸! 업고 가자 💑"; // Point 7: 메시지 변경
                 }
             }
         }
@@ -396,22 +569,57 @@ export const useYutGame = () => {
         const originalCatch = gameState.history[0]?.includes("잡았습니다") || gameState.history[0]?.includes("한 번 더");
         const caughtInEvent = updates.history?.[0]?.includes("한 번 더") || updates.history?.[0]?.includes("잡았습니다");
         const bonusThrowInEvent = drawResult.id === 3;
+        const isSwapEvent = drawResult.id === 6;
 
-        // 턴 전환 여부 결정: 남은 이동권이 없고, 상대를 잡지 않았고(원래 혹은 이벤트), 보너스 던지기가 아닐 때
-        const shouldSwitch = newState.pendingMoves.length === 0 && !originalCatch && !caughtInEvent && !bonusThrowInEvent;
+        const currentTeamAfterMove = newState.teams[gameState.currentTeamIndex];
+        const hasFinished = currentTeamAfterMove.rank !== undefined;
+
+        if (hasFinished) {
+            newState.pendingMoves = [];
+        }
+
+        // 턴 전환 여부 결정
+        const shouldSwitch = (newState.pendingMoves.length === 0 && !originalCatch && !caughtInEvent && !bonusThrowInEvent) || hasFinished;
 
         if (shouldSwitch) {
             let nextIndex = (gameState.currentTeamIndex + 1) % gameState.teams.length;
             let skipList = [...(newState.skipNextTurnTeamIds || [])];
 
-            while (skipList.includes(gameState.teams[nextIndex].id)) {
-                const idx = skipList.indexOf(gameState.teams[nextIndex].id);
-                if (idx > -1) skipList.splice(idx, 1);
-                newState.history = [`${gameState.teams[nextIndex].name}: 동면 중이라 턴을 건너뜁니다.`, ...(newState.history || [])];
-                nextIndex = (nextIndex + 1) % gameState.teams.length;
+            let attempts = 0;
+            while (attempts < newState.teams.length) {
+                const nextTeam = newState.teams[nextIndex];
+                if (nextTeam.rank !== undefined) {
+                    nextIndex = (nextIndex + 1) % newState.teams.length;
+                    attempts++;
+                    continue;
+                }
+                if (skipList.includes(nextTeam.id)) {
+                    const idx = skipList.indexOf(nextTeam.id);
+                    if (idx > -1) skipList.splice(idx, 1);
+                    newState.history = [`${nextTeam.name}: 동면 중이라 턴을 건너뜁니다.`, ...(newState.history || [])];
+                    nextIndex = (nextIndex + 1) % newState.teams.length;
+                    attempts++;
+                    continue;
+                }
+                break;
             }
             newState.skipNextTurnTeamIds = skipList;
             newState.currentTeamIndex = nextIndex;
+            newState.comboCount = 0; // 턴 전환 시 콤보 초기화
+        }
+
+        // 게임 종료 체크 (이벤트 완주 시)
+        const activeTeams = newState.teams.filter(t => t.rank === undefined);
+        if (activeTeams.length <= 1) {
+            newState.status = 'finished';
+        }
+
+        if (caughtInEvent) {
+            const nextCombo = newState.comboCount + 1;
+            newState.comboCount = nextCombo;
+            newState.showBonusBanner = true;
+            audioService.playCombo(nextCombo);
+            setTimeout(() => setGameState(s => ({ ...s, showBonusBanner: false })), 2000);
         }
 
         setShowEventModal(false);
@@ -419,7 +627,14 @@ export const useYutGame = () => {
         setEventTargetPieceId(null);
 
         pushState(newState);
-        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, screenShake: false, showExplosion: null })), 4000);
+
+        if (newState.victoryTeamName) {
+            setTimeout(() => setGameState(s => ({ ...s, victoryTeamName: null })), 4000);
+        }
+
+        // 폭발(블랙홀) 이벤트: 화면 흔들림 3.5초, 배너/폭발 효과 4초
+        setTimeout(() => setGameState(s => ({ ...s, screenShake: false })), 3500);
+        setTimeout(() => setGameState(s => ({ ...s, eventBanner: null, showExplosion: null })), 4000);
     }, [drawResult, eventTargetPieceId, gameState, pushState]);
 
     const handleEventSelection = useCallback((index: number) => {
@@ -434,23 +649,48 @@ export const useYutGame = () => {
     const startGame = useCallback(() => {
         const teams: Team[] = Array.from({ length: setupConfig.teamCount }).map((_, i) => ({
             id: ['A', 'B', 'C', 'D'][i] as TeamId,
-            name: `${i + 1}팀`,
+            name: setupConfig.teamNames[i] || `${i + 1}팀`,
             emoji: TEAM_EMOJIS[i % TEAM_EMOJIS.length],
             color: ['#E11D48', '#2563EB', '#D97706', '#059669'][i],
             piecesAtHome: setupConfig.pieceCount,
-            piecesFinished: 0
+            piecesFinished: 0,
+            catchCount: 0
         }));
         setGameState({
             ...createInitialGameState(),
             status: 'playing',
             teams,
             maxPieces: setupConfig.pieceCount,
-            specialNodes: getRandomSpecialNodes(),
-            history: ['정겨운 윷놀이가 시작되었습니다.']
+            specialNodes: getRandomSpecialNodes(setupConfig.eventCount),
+            history: ['정겨운 윷놀이가 시작되었습니다.'],
+            endingQuote: null,
+            theme: gameState.theme,
+            snackMoney: setupConfig.snackMoney
         });
         setStateStack([]);
         audioService.init();
-    }, [setupConfig, getRandomSpecialNodes]);
+    }, [setupConfig, getRandomSpecialNodes, gameState.theme]);
+
+    const stopGame = useCallback(() => {
+        const quotes = [
+            "웃으면 복이 와요! 😊",
+            "웃음은 최고의 보약입니다. ❤️",
+            "오늘 하루도 웃음 가득한 날 되세요! ✨",
+            "당신의 웃음이 세상을 밝게 만듭니다. 🌟",
+            "한 번 웃으면 한 번 젊어져요! (일소일소 일로일로) 🍀"
+        ];
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+        setGameState(s => ({ ...s, endingQuote: randomQuote }));
+        audioService.playLaugh();
+    }, []);
+
+    const goToSetup = useCallback(() => {
+        setGameState(s => ({ ...createInitialGameState(), theme: s.theme }));
+    }, []);
+
+    const setTheme = useCallback((theme: 'traditional' | 'cyber') => {
+        setGameState(s => ({ ...s, theme }));
+    }, []);
 
     const getYutLabel = (res: YutResult): string => {
         const labels: Record<YutResult, string> = {
@@ -480,6 +720,9 @@ export const useYutGame = () => {
         stateStack,
         validTarget,
         previewPath,
-        getYutLabel
+        getYutLabel,
+        stopGame,
+        goToSetup,
+        setTheme
     };
 };
