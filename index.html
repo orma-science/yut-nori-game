@@ -25,28 +25,48 @@
 
             0%,
             100% {
-                transform: rotate(0deg);
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            10% {
+                transform: translate(-8px, -6px) rotate(-5deg);
             }
 
             20% {
-                transform: rotate(-4deg);
+                transform: translate(8px, 6px) rotate(5deg);
+            }
+
+            30% {
+                transform: translate(-10px, 4px) rotate(-4deg);
             }
 
             40% {
-                transform: rotate(4deg);
+                transform: translate(10px, -4px) rotate(4deg);
+            }
+
+            50% {
+                transform: translate(-8px, 8px) rotate(-5deg);
             }
 
             60% {
-                transform: rotate(-4deg);
+                transform: translate(8px, -8px) rotate(5deg);
+            }
+
+            70% {
+                transform: translate(-6px, 6px) rotate(-3deg);
             }
 
             80% {
-                transform: rotate(4deg);
+                transform: translate(6px, -6px) rotate(3deg);
+            }
+
+            90% {
+                transform: translate(-4px, 4px) rotate(-2deg);
             }
         }
 
         .shake {
-            animation: shake 0.1s infinite;
+            animation: shake 0.15s infinite;
         }
 
         @keyframes zoomIn {
@@ -124,6 +144,26 @@
         .blast-anim {
             animation: blast 0.5s ease-out forwards;
         }
+
+        @keyframes blackhole-spin {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            30% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(4) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .blackhole-anim {
+            animation: blackhole-spin 2s ease-in forwards;
+        }
     </style>
     <script type="importmap">
     {
@@ -135,6 +175,18 @@
     }
     </script>
     <link rel="stylesheet" href="index.css">
+    <!-- PWA 설정 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#d4af37">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered!', reg))
+                    .catch(err => console.log('SW registration failed!', err));
+            });
+        }
+    </script>
 </head>
 
 <body>

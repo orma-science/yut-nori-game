@@ -35,8 +35,12 @@ const App: React.FC = () => {
       <SetupScreen
         teamCount={setupConfig.teamCount}
         pieceCount={setupConfig.pieceCount}
+        eventCount={setupConfig.eventCount}
+        teamNames={setupConfig.teamNames}
         setTeamCount={(n) => setSetupConfig(prev => ({ ...prev, teamCount: n }))}
         setPieceCount={(n) => setSetupConfig(prev => ({ ...prev, pieceCount: n }))}
+        setEventCount={(n) => setSetupConfig(prev => ({ ...prev, eventCount: n }))}
+        setTeamNames={(names) => setSetupConfig(prev => ({ ...prev, teamNames: names }))}
         onStart={startGame}
       />
     );
