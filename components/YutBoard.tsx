@@ -2,6 +2,7 @@
 import React from 'react';
 import { GameState, Team, Piece } from '../types';
 import { NODE_COORDS } from '../constants';
+import { UpIcon } from './UpIcon';
 
 interface YutBoardProps {
     gameState: GameState;
@@ -20,13 +21,32 @@ export const YutBoard: React.FC<YutBoardProps> = ({
 }) => {
     const currentTeam = gameState.teams[gameState.currentTeamIndex];
 
+    const isCyber = gameState.theme === 'cyber';
+
     return (
-        <div className={`aspect-square w-full max-w-[90vh] relative rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] border-[16px] border-[#2c1d12] bg-[#1a120b] shrink-0`} onClick={(e) => e.stopPropagation()}>
-            <div className="absolute inset-0 rounded-[3rem] border-4 border-[#d4af37]/10 pointer-events-none"></div>
+        <div className={`aspect-square w-full max-w-[90vh] relative rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] border-[16px] transition-all duration-700 shrink-0
+            ${isCyber
+                ? 'border-blue-600 bg-[#000814] shadow-[0_0_50px_rgba(37,99,235,0.4)]'
+                : 'border-[#2c1d12] bg-[#1a120b]'}`}
+            onClick={(e) => e.stopPropagation()}
+        >
+            {/* Theme Specific Overlay */}
+            {isCyber ? (
+                <div className="absolute inset-0 rounded-[3rem] opacity-30 pointer-events-none" style={{ backgroundImage: 'linear-gradient(#1e3a8a 1px, transparent 1px), linear-gradient(90deg, #1e3a8a 1px, transparent 1px)', backgroundSize: '4% 4%' }}></div>
+            ) : (
+                <div className="absolute inset-0 rounded-[3rem] border-4 border-[#d4af37]/10 pointer-events-none"></div>
+            )}
 
             {/* Path Lines */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
-                <path d="M 90 90 L 90 10 L 10 10 L 10 90 Z M 10 10 L 90 90 M 90 10 L 10 90" fill="none" stroke="#d4af37" strokeWidth="0.8" strokeOpacity="0.2" />
+                <path
+                    d="M 90 90 L 90 10 L 10 10 L 10 90 Z M 10 10 L 90 90 M 90 10 L 10 90"
+                    fill="none"
+                    stroke={isCyber ? "#60A5FA" : "#d4af37"}
+                    strokeWidth={isCyber ? "1.2" : "0.8"}
+                    strokeOpacity={isCyber ? "0.4" : "0.2"}
+                    className={isCyber ? "drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]" : ""}
+                />
                 {previewPath.length > 0 && (
                     <polyline
                         points={
@@ -55,20 +75,24 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                 const isSupport = nodeId === gameState.specialNodes.upNode;
                 const isCorner = [0, 5, 10, 15, 22].includes(nodeId);
 
+                const isSpecial = isEvent || isTrial || isSupport;
+
                 return (
                     <div
                         key={id}
                         onClick={() => onNodeClick(nodeId)}
                         className={`absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-all cursor-pointer z-10 
-               ${isCorner ? 'w-[6%] h-[6%] rounded-2xl rotate-45 border-[#d4af37]/60' : 'w-[4.5%] h-[4.5%] rounded-full border-[#d4af37]/20'} 
-               ${isTrial ? 'w-[10%] h-[10%] z-20 shadow-[0_0_40px_rgba(239,68,68,0.8)] border-red-500 bg-red-950/40 animate-pulse' : ''}
-               ${isSupport ? 'w-[10%] h-[10%] z-20 shadow-[0_0_40px_rgba(255,105,180,0.8)] border-pink-500 bg-pink-950/40 animate-bounce' : ''}
-               border-2 
-               ${isTarget ? 'bg-white scale-[1.8] z-50 shadow-[0_0_40px_white] border-white animate-pulse' : 'bg-[#1a120b] hover:border-white/50'}`}
+               ${!isSpecial ? (isCorner ? `w-[6%] h-[6%] rounded-2xl rotate-45 border-2 ${isCyber ? 'border-blue-400 bg-blue-900/40 shadow-[0_0_15px_rgba(96,165,250,0.5)]' : 'border-[#d4af37]/60 bg-[#1a120b]'}` : `w-[4.5%] h-[4.5%] rounded-full border-2 ${isCyber ? 'border-blue-500/30 bg-blue-950/60' : 'border-[#d4af37]/20 bg-[#1a120b]'}`) : ''} 
+               ${isEvent ? 'w-[18%] h-[18%] z-10 bg-transparent' : ''}
+               ${isTrial ? 'w-[18%] h-[18%] z-10 bg-transparent' : ''}
+               ${isSupport ? 'w-[22%] h-[22%] z-10 bg-transparent' : ''}
+               ${isTarget ? 'bg-white scale-[1.8] z-50 shadow-[0_0_40px_white] border-white animate-pulse' : 'hover:border-white/50'}`}
                         style={{ left: `${coord.x}%`, top: `${coord.y}%` }}
                     >
-                        <div className={`${isCorner ? '-rotate-45' : ''} ${isTrial || isSupport ? 'text-[3.5cqw]' : 'text-[1.5cqw]'} opacity-100`}>
-                            {isEvent && "🧧"} {isTrial && "🧨"} {isSupport && "💑"}
+                        <div className={`absolute inset-0 flex items-center justify-center ${isCorner ? '-rotate-45' : ''}`}>
+                            {isEvent && <img src="/event.png" alt="이벤트" className="w-[85%] h-[85%] object-contain" style={{ transformOrigin: 'center center' }} />}
+                            {isTrial && <img src="/blackhall.png" alt="블랙홀" className="w-[95%] h-[95%] object-contain animate-[spin_12s_linear_infinite] filter drop-shadow-[0_0_25px_rgba(0,0,0,0.9)]" style={{ transformOrigin: 'center center' }} />}
+                            {isSupport && <UpIcon />}
                         </div>
                     </div>
                 );
@@ -94,11 +118,26 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                         key={piece.id}
                         onClick={(e) => { e.stopPropagation(); if (isCurrentTeam) onPieceClick(piece.id); }}
                         className={`absolute w-[10%] h-[10%] -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-all cursor-pointer z-40 
-              ${isSelected ? 'scale-125 z-[60] drop-shadow-[0_0_30px_white]' : 'hover:scale-110'} 
-              ${!isCurrentTeam ? 'opacity-60 grayscale-[0.3]' : ''}`}
+              ${isSelected ? 'scale-125 z-[60] drop-shadow-[0_0_35px_white]' : 'hover:scale-110'}`}
                         style={{ left: `${coord.x}%`, top: `${coord.y}%` }}
                     >
-                        <span className="text-[5cqw] drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] filter select-none transition-transform active:scale-95" style={{ fontSize: 'min(8vh, 8vw)' }}>
+                        {/* 현재 턴인 말에 해당 팀 색상의 강조 원 추가 */}
+                        {isCurrentTeam && (
+                            <>
+                                <div
+                                    className="absolute inset-[-15%] rounded-full border-[3px] border-dashed animate-[spin_10s_linear_infinite] opacity-60"
+                                    style={{ borderColor: team?.color }}
+                                ></div>
+                                <div
+                                    className="absolute inset-[-15%] rounded-full border-2 animate-pulse opacity-40 shadow-[0_0_15px_inset]"
+                                    style={{ borderColor: team?.color, boxShadow: `0 0 15px ${team?.color}` }}
+                                ></div>
+                            </>
+                        )}
+                        {/* 말 뒤에 그림자를 주어 아이콘을 완벽히 차단 */}
+                        <div className="absolute inset-0 rounded-full bg-black/20 blur-md"></div>
+
+                        <span className="text-[5cqw] drop-shadow-[0_4px_12px_rgba(0,0,0,0.9)] filter select-none transition-transform active:scale-95 relative z-10" style={{ fontSize: 'min(8vh, 8vw)' }}>
                             {team?.emoji}
                         </span>
                         {piece.stackCount > 1 && (
@@ -110,18 +149,21 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                 );
             })}
 
-            {/* Explosion Effect */}
+            {/* Black Hole Effect */}
             {gameState.showExplosion && (
                 <div
                     className="absolute z-[150] pointer-events-none"
                     style={{ left: `${gameState.showExplosion.x}%`, top: `${gameState.showExplosion.y}%` }}
                 >
-                    {/* Shell Falling */}
-                    <div className="absolute -translate-x-1/2 -translate-y-1/2 text-[100px] shell-anim">🚀</div>
-                    {/* Blast Wave */}
-                    <div className="absolute -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-orange-500 rounded-full blur-2xl opacity-0 blast-anim"></div>
-                    <div className="absolute -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-yellow-400 rounded-full blur-3xl opacity-0 blast-anim [animation-delay:0.1s]"></div>
-                    <div className="absolute -translate-x-1/2 -translate-y-1/2 text-[120px] opacity-0 blast-anim [animation-delay:0.15s]">💥</div>
+                    {/* Outer glow ring */}
+                    <div className="absolute w-40 h-40 rounded-full bg-purple-900/60 blur-3xl blackhole-anim" style={{ left: '-80px', top: '-80px' }}></div>
+                    {/* Dark vortex core */}
+                    <div className="absolute w-24 h-24 rounded-full bg-black border-4 border-purple-500 shadow-[0_0_60px_rgba(168,85,247,0.9)] blackhole-anim" style={{ left: '-48px', top: '-48px' }}></div>
+                    {/* Black hole emoji */}
+                    <div className="absolute text-[80px] blackhole-anim" style={{ left: '-40px', top: '-40px' }}>🕳️</div>
+                    {/* Swirling particles */}
+                    <div className="absolute w-48 h-48 rounded-full border-2 border-purple-400/40 blast-anim" style={{ left: '-96px', top: '-96px' }}></div>
+                    <div className="absolute w-64 h-64 rounded-full border border-indigo-400/20 blast-anim [animation-delay:0.2s]" style={{ left: '-128px', top: '-128px' }}></div>
                 </div>
             )}
         </div>

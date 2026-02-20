@@ -5,10 +5,22 @@ import { YutResult } from '../types';
 interface YutControllerProps {
     onInput: (result: YutResult) => void;
     disabled: boolean;
+    theme?: 'traditional' | 'cyber';
 }
 
-const Stick: React.FC<{ type: 'flat' | 'round' | 'backdo'; small?: boolean }> = ({ type, small }) => {
-    const baseClass = `rounded-full border-2 border-black/20 shadow-sm transition-all ${small ? 'w-2 h-8' : 'w-3 h-12'}`;
+const Stick: React.FC<{ type: 'flat' | 'round' | 'backdo'; small?: boolean; theme?: string }> = ({ type, small, theme }) => {
+    const isCyber = theme === 'cyber';
+    const baseClass = `rounded-full border-2 transition-all ${small ? 'w-2 h-8' : 'w-3 h-12'} ${isCyber ? 'border-blue-400/50' : 'border-black/20'}`;
+
+    if (isCyber) {
+        // Cyber energy bar look
+        const color = type === 'flat' ? 'bg-blue-400 shadow-[0_0_10px_#60A5FA]' : 'bg-blue-900/60';
+        return (
+            <div className={`${baseClass} ${color} relative flex items-center justify-center`}>
+                {type === 'backdo' && <div className="absolute inset-0 flex items-center justify-center text-[10px] text-red-500 font-bold animate-pulse">!</div>}
+            </div>
+        );
+    }
 
     if (type === 'round') {
         // Round side (Back of stick) - Darker, convex look
@@ -35,19 +47,25 @@ const Stick: React.FC<{ type: 'flat' | 'round' | 'backdo'; small?: boolean }> = 
     return null;
 };
 
-const YutButton: React.FC<{ result: YutResult; onClick: () => void; label: string; pattern: ('flat' | 'round' | 'backdo')[] }> = ({ result, onClick, label, pattern }) => (
-    <button
-        onClick={onClick}
-        className="group relative flex flex-col items-center justify-center bg-black/40 hover:bg-[#d4af37] py-4 rounded-xl border-2 border-[#d4af37]/30 transition-all active:scale-95 hover:shadow-[0_0_20px_#d4af37]"
-    >
-        <div className="flex gap-1 mb-2">
-            {pattern.map((p, i) => <Stick key={i} type={p} />)}
-        </div>
-        <span className="text-xl font-black text-[#d4af37] group-hover:text-black">{label}</span>
-    </button>
-);
+const YutButton: React.FC<{ result: YutResult; onClick: () => void; label: string; pattern: ('flat' | 'round' | 'backdo')[], theme?: string }> = ({ result, onClick, label, pattern, theme }) => {
+    const isCyber = theme === 'cyber';
+    return (
+        <button
+            onClick={onClick}
+            className={`group relative flex flex-col items-center justify-center py-4 rounded-xl border-2 transition-all active:scale-95 
+                ${isCyber
+                    ? 'bg-blue-900/20 border-blue-500/30 hover:bg-blue-600/40 hover:border-blue-400 hover:shadow-[0_0_20px_rgba(96,165,250,0.5)]'
+                    : 'bg-black/40 border-[#d4af37]/30 hover:bg-[#d4af37] hover:shadow-[0_0_20px_#d4af37]'}`}
+        >
+            <div className="flex gap-1 mb-2">
+                {pattern.map((p, i) => <Stick key={i} type={p} theme={theme} />)}
+            </div>
+            <span className={`text-xl font-black ${isCyber ? 'text-blue-400 group-hover:text-blue-100' : 'text-[#d4af37] group-hover:text-black'}`}>{label}</span>
+        </button>
+    );
+};
 
-export const YutController: React.FC<YutControllerProps> = ({ onInput }) => {
+export const YutController: React.FC<YutControllerProps> = ({ onInput, theme }) => {
 
     const patterns: Record<YutResult, ('flat' | 'round' | 'backdo')[]> = {
         'DO': ['round', 'round', 'round', 'flat'],
@@ -74,6 +92,7 @@ export const YutController: React.FC<YutControllerProps> = ({ onInput }) => {
                     onClick={() => onInput(res)}
                     label={labels[res]}
                     pattern={patterns[res]}
+                    theme={theme}
                 />
             ))}
         </div>
