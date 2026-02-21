@@ -19,7 +19,15 @@
             user-select: none;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
             font-size: 20px;
+        }
+
+        .dynamic-text {
+            /* 텍스트 렌더링 최적화 - 스케일링 시 깨짐 방지 */
+            backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-font-smoothing: subpixel-antialiased;
         }
 
         @keyframes shake {
