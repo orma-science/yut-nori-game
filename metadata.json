@@ -1,0 +1,5 @@
+{
+  "name": "슈퍼 윷놀이 게임",
+  "description": "Digital Scoreboard for Offline Yutnori. Features stacking, manual node selection, and randomized team setup.",
+  "requestFramePermissions": []
+}

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>정겨운 윷놀이 마당 V13.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Jua&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nanum Myeongjo', serif;
+            background-color: #0c0c0c;
+            color: white;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            font-size: 20px;
+        }
+
+        .dynamic-text {
+            /* 텍스트 렌더링 최적화 - 스케일링 시 깨짐 방지 */
+            backface-visibility: hidden;
+            transform: translateZ(0);
+            -webkit-font-smoothing: subpixel-antialiased;
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            10% {
+                transform: translate(-8px, -6px) rotate(-5deg);
+            }
+
+            20% {
+                transform: translate(8px, 6px) rotate(5deg);
+            }
+
+            30% {
+                transform: translate(-10px, 4px) rotate(-4deg);
+            }
+
+            40% {
+                transform: translate(10px, -4px) rotate(4deg);
+            }
+
+            50% {
+                transform: translate(-8px, 8px) rotate(-5deg);
+            }
+
+            60% {
+                transform: translate(8px, -8px) rotate(5deg);
+            }
+
+            70% {
+                transform: translate(-6px, 6px) rotate(-3deg);
+            }
+
+            80% {
+                transform: translate(6px, -6px) rotate(3deg);
+            }
+
+            90% {
+                transform: translate(-4px, 4px) rotate(-2deg);
+            }
+        }
+
+        .shake {
+            animation: shake 0.15s infinite;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -20;
+            }
+        }
+
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+        }
+
+        @keyframes shell-fall {
+            0% {
+                transform: translateY(-1000px) scale(0.5);
+                opacity: 0;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes blast {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            20% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        .shell-anim {
+            animation: shell-fall 0.8s cubic-bezier(0.47, 0, 0.745, 0.715) forwards;
+        }
+
+        .blast-anim {
+            animation: blast 0.5s ease-out forwards;
+        }
+
+        @keyframes blackhole-spin {
+            0% {
+                transform: translate(-50%, -50%) scale(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            30% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(4) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .blackhole-anim {
+            animation: blackhole-spin 2s ease-in forwards;
+        }
+
+        /* Cyber Theme Specific Animations */
+        @keyframes shimmer {
+            0% {
+                transform: translateX(-100%);
+            }
+
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        @keyframes scanline {
+            0% {
+                transform: translateY(-100%);
+            }
+
+            100% {
+                transform: translateY(100%);
+            }
+        }
+
+        .cyber-scanline {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, transparent, rgba(96, 165, 250, 0.05), transparent);
+            height: 100px;
+            pointer-events: none;
+            animation: scanline 4s linear infinite;
+        }
+
+        /* Piece Animations */
+        @keyframes piece-jump {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+
+            50% {
+                transform: translate(-50%, -80%) scale(1.2);
+            }
+        }
+
+        .animate-jump {
+            animation: piece-jump 0.4s cubic-bezier(0.45, 0.05, 0.55, 0.95);
+        }
+
+        @keyframes piece-caught {
+            0% {
+                transform: translate(-50%, -50%) scale(1) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(200%, -300%) scale(0.5) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        .animate-caught {
+            animation: piece-caught 0.8s ease-in forwards;
+        }
+
+        @keyframes dust-burst {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0.8;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(2);
+                opacity: 0;
+            }
+        }
+
+        .dust-particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            background: rgba(212, 175, 55, 0.4);
+            animation: dust-burst 0.5s ease-out forwards;
+        }
+
+        @keyframes vortex {
+            0% {
+                transform: rotate(0deg) scale(1);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: rotate(180deg) scale(1.1);
+                opacity: 0.6;
+            }
+
+            100% {
+                transform: rotate(360deg) scale(1);
+                opacity: 0.3;
+            }
+        }
+
+        .animate-vortex {
+            animation: vortex 4s linear infinite;
+        }
+
+        @keyframes warning-pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 20px rgba(168, 85, 247, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0);
+            }
+        }
+
+        .animate-warning {
+            animation: warning-pulse 2s infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            z-index: 1000;
+            pointer-events: none;
+            animation: confetti-fall 3s linear forwards;
+        }
+    </style>
+    <script type="importmap">
+    {
+      "imports": {
+        "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+        "react/": "https://esm.sh/react@^19.2.4/",
+        "react": "https://esm.sh/react@^19.2.4"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="index.css">
+    <!-- PWA 설정 -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#d4af37">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(reg => console.log('SW registered!', reg))
+                    .catch(err => console.log('SW registration failed!', err));
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+</body>
+
+</html>

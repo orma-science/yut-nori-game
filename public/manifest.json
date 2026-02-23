@@ -1,0 +1,22 @@
+{
+    "name": "슈퍼 윷놀이 게임",
+    "short_name": "슈퍼윷놀이",
+    "description": "전략과 재미가 가득한 프리미엄 윷놀이 게임",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0c0c0c",
+    "theme_color": "#d4af37",
+    "icons": [
+        {
+            "src": "favicon.ico",
+            "sizes": "64x64 32x32 24x24 16x16",
+            "type": "image/x-icon"
+        },
+        {
+            "src": "https://cdn-icons-png.flaticon.com/512/3507/3507114.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}
