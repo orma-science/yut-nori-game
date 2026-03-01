@@ -33,12 +33,22 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
   const {
     gameState,
     setGameState,
     setupConfig,
     setSetupConfig,
-    startGame,
+    startGame: originalStartGame,
     inputYutResult,
     handleNodeClick,
     handleReset,
@@ -53,10 +63,26 @@ const App: React.FC = () => {
     validTarget,
     previewPath,
     getYutLabel,
-    stopGame,
+    stopGame: originalStopGame,
     goToSetup,
     setTheme
   } = useYutGame();
+
+  const startGame = () => {
+    // 게임 시작 시 전체화면 시도
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => { });
+    }
+    originalStartGame();
+  };
+
+  const stopGame = () => {
+    // 게임 종료 시 전체화면 해제 (실제 종료를 원할 때)
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => { });
+    }
+    originalStopGame();
+  };
 
   const renderContent = () => {
     if (gameState.status === 'setup') {

@@ -56,6 +56,7 @@ export interface GameState {
   caughtPiece: (Piece & { emoji: string }) | null; // 튕겨나가는 말 정보
   showDust: { x: number, y: number } | null; // 먼지 효과 위치
   snackPayerTeamId: TeamId | null; // 오늘 간식 쏜 팀 ID
+  canRoll: boolean; // 현재 턴에서 윷을 던질 수 있는 권한이 있는지 여부
   cumulativeStats: Record<string, number>; // 팀 이름별 누적 우승 횟수
 }
 

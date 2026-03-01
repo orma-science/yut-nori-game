@@ -32,6 +32,7 @@ const createInitialGameState = (): GameState => ({
     caughtPiece: null,
     showDust: null,
     snackPayerTeamId: null,
+    canRoll: true,
     cumulativeStats: JSON.parse(localStorage.getItem('yut_stats') || '{}')
 });
 
@@ -243,6 +244,7 @@ export const useYutGame = () => {
             id: 3, title: "✨ 황금 윷가락", description: "한 번 더 던질 기회를 얻었습니다!", action: (pid, state) => {
                 audioService.playTwinkle();
                 return {
+                    canRoll: true, // 추가 기회 부여
                     history: ["이벤트: 보너스 턴 획득!", ...state.history]
                 };
             }
@@ -394,16 +396,23 @@ export const useYutGame = () => {
     }, [getRandomSpecialNodes, setupConfig.eventCount]);
 
     const inputYutResult = useCallback((result: YutResult) => {
-        if (gameState.isMoving || showEventModal) return;
+        if (gameState.isMoving || showEventModal || !gameState.canRoll) return;
         audioService.playJump();
 
         const team = gameState.teams[gameState.currentTeamIndex];
         const hasOnBoard = gameState.pieces.some(p => p.teamId === team.id);
 
         let nextState = { ...gameState, history: [...gameState.history], pendingMoves: [...gameState.pendingMoves] };
+
+        // 윷이나 모가 아니면 이번 턴의 던지기 권한 소멸 (단, 잡기가 발생하면 다시 부여됨)
+        if (result !== 'YUT' && result !== 'MO') {
+            nextState.canRoll = false;
+        }
+
         if (result === 'BACK_DO' && !hasOnBoard && gameState.pendingMoves.length === 0) {
             nextState.currentTeamIndex = (gameState.currentTeamIndex + 1) % gameState.teams.length;
             nextState.history = [`${team.name}: 빽도! (무를 칸이 없음)`, ...gameState.history];
+            nextState.canRoll = true; // 다음 팀은 던질 수 있어야 함
         } else {
             nextState.pendingMoves.push(result);
             nextState.activeMoveIndex = nextState.pendingMoves.length - 1;
@@ -502,7 +511,8 @@ export const useYutGame = () => {
             newState.history = [`${currentTeamAfterMove.name} 팀이 게임을 완주했습니다! 🏁 (남은 기회 소멸)`, ...newState.history];
         }
 
-        const shouldSwitch = (newState.pendingMoves.length === 0 && !caughtEnemy && !isEvent) || hasFinished;
+        // 턴 전환 여부 결정: 이동 기회가 없고, 상대를 잡지 않았고, 이벤트도 아니고, 추가 던지기 기회도 없을 때
+        const shouldSwitch = (newState.pendingMoves.length === 0 && !caughtEnemy && !isEvent && !newState.canRoll) || hasFinished;
 
         if (shouldSwitch) {
             let nextIndex = (gameState.currentTeamIndex + 1) % newState.teams.length;
@@ -529,6 +539,7 @@ export const useYutGame = () => {
             newState.skipNextTurnTeamIds = skipList;
             newState.currentTeamIndex = nextIndex;
             newState.comboCount = 0; // 턴 전환 시 콤보 초기화
+            newState.canRoll = true; // 다음 팀에게 던지기 권한 부여
         }
 
         // 게임 종료 체크: 한 팀 빼고 모두 완주했는가?
@@ -656,9 +667,13 @@ export const useYutGame = () => {
             newState.history = [`${currentTeamAfterMove.name} 팀이 게임을 완주했습니다! 🏁 (남은 기회 소멸)`, ...newState.history];
         }
 
+        if (originalCatch || caughtInEvent || bonusThrowInEvent) {
+            newState.canRoll = true; // 보너스 던지기 기회 부활
+        }
+
         // 턴 전환 여부 결정
-        // 완주한 경우 무조건 턴을 넘깁니다. (caughtInEvent 등 무시)
-        const shouldSwitch = hasFinished || (newState.pendingMoves.length === 0 && !originalCatch && !caughtInEvent && !bonusThrowInEvent);
+        // 완주한 경우 무조건 턴을 넘깁니다.
+        const shouldSwitch = hasFinished || (newState.pendingMoves.length === 0 && !originalCatch && !caughtInEvent && !bonusThrowInEvent && !newState.canRoll);
 
         if (shouldSwitch) {
             let nextIndex = (gameState.currentTeamIndex + 1) % newState.teams.length;
@@ -685,6 +700,7 @@ export const useYutGame = () => {
             newState.skipNextTurnTeamIds = skipList;
             newState.currentTeamIndex = nextIndex;
             newState.comboCount = 0; // 턴 전환 시 콤보 초기화
+            newState.canRoll = true; // 다음 팀에게 던지기 권한 부여
         }
 
         // 게임 종료 체크 (이벤트 완주 시)

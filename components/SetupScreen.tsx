@@ -46,7 +46,7 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
 
     return (
         <div
-            className="h-screen w-screen relative flex items-center justify-center overflow-hidden font-['Nanum_Myeongjo']"
+            className="h-[960px] w-[1920px] relative flex items-center justify-center overflow-hidden font-['Nanum_Myeongjo']"
             onMouseMove={handleMouseMove}
         >
             {/* 1. 배경 레이어 */}
@@ -110,12 +110,19 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
             {/* 메인 설정창 컨테이너 */}
             <div className={`
                 relative w-[92%] max-w-[1000px] bg-white/95 backdrop-blur-md rounded-[50px] 
-                border-[10px] p-10 flex flex-col items-center shadow-[0_25px_60px_rgba(0,0,0,0.2)]
+                border-[10px] p-8 flex flex-col items-center shadow-[0_25px_60px_rgba(0,0,0,0.2)]
                 ${isCyber ? 'border-blue-500 bg-black/80' : 'border-[#FFD700]'}
             `}>
 
                 {/* 상단 테마 버튼 */}
-                <div className="absolute -top-12 right-0 flex gap-3">
+                <div className="absolute -top-16 right-0 flex gap-3">
+                    <button onClick={() => {
+                        if (!document.fullscreenElement) {
+                            document.documentElement.requestFullscreen().catch(() => { });
+                        } else {
+                            document.exitFullscreen().catch(() => { });
+                        }
+                    }} className="px-6 py-2.5 rounded-full font-black text-xl border-4 bg-black text-white border-white hover:scale-110 active:scale-95 transition-all shadow-lg order-first mr-4">전체화면 ⎙</button>
                     <button onClick={() => setTheme('traditional')} className={`px-8 py-2.5 rounded-full font-black text-xl border-4 transition-all shadow-md ${theme === 'traditional' ? 'bg-[#FFD700] text-black border-white' : 'bg-white/90 text-gray-400 border-gray-100'}`}>전통 모드</button>
                     <button onClick={() => setTheme('cyber')} className={`px-8 py-2.5 rounded-full font-black text-xl border-4 transition-all shadow-md ${theme === 'cyber' ? 'bg-blue-600 text-white border-blue-400' : 'bg-white/90 text-gray-400 border-gray-100'}`}>사이버 모드</button>
                 </div>
