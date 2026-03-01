@@ -158,12 +158,12 @@ const App: React.FC = () => {
         )}
 
         {/* Left Panel: Status */}
-        <div className={`w-[28%] max-w-lg h-full border-r-2 ${gameState.theme === 'cyber' ? 'border-blue-500/40 bg-blue-950/10 shadow-[20px_0_50px_rgba(37,99,235,0.1)]' : 'border-[#d4af37]/20 bg-[#1a120b]/40'}`}>
+        <div className={`w-[20%] max-w-md h-full border-r-2 ${gameState.theme === 'cyber' ? 'border-blue-500/40 bg-blue-950/10 shadow-[20px_0_50px_rgba(37,99,235,0.1)]' : 'border-[#d4af37]/20 bg-[#1a120b]/40'}`}>
           <GameStatus gameState={gameState} onReset={handleReset} onGoHome={goToSetup} />
         </div>
 
         {/* Center: Board */}
-        <div className="flex-1 relative flex items-center justify-center p-4 z-10" onClick={() => setGameState(p => ({ ...p, selectedPieceId: null }))}>
+        <div className="flex-1 relative flex items-center justify-center p-2 z-10" onClick={() => setGameState(p => ({ ...p, selectedPieceId: null }))}>
           <YutBoard
             gameState={gameState}
             validTarget={validTarget}
@@ -174,7 +174,7 @@ const App: React.FC = () => {
         </div>
 
         {/* Right Panel: Controls */}
-        <div className="w-[28%] max-w-lg p-6 flex flex-col z-20 backdrop-blur-md bg-black/40 border-l-2 border-[#d4af37]/20 shadow-2xl">
+        <div className="w-[20%] max-w-md p-5 flex flex-col z-20 backdrop-blur-md bg-black/40 border-l-2 border-[#d4af37]/20 shadow-2xl">
           <h3 className="text-3xl font-black text-[#d4af37] text-center mb-6 tracking-[0.2em] uppercase italic text-glow">명령 관리</h3>
           <div className="space-y-4 flex-1 flex flex-col min-h-0">
             <div className="space-y-3 shrink-0">

@@ -24,7 +24,7 @@ export const YutBoard: React.FC<YutBoardProps> = ({
     const isCyber = gameState.theme === 'cyber';
 
     return (
-        <div className={`aspect-square w-full max-w-[90vh] relative rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] border-[16px] transition-all duration-700 shrink-0
+        <div className={`aspect-square w-full max-w-[95%] h-full max-h-[95%] relative rounded-[4rem] shadow-[0_0_100px_rgba(0,0,0,1)] border-[16px] transition-all duration-700 shrink-0
             ${isCyber
                 ? 'border-blue-600 bg-[#000814] shadow-[0_0_50px_rgba(37,99,235,0.4)]'
                 : 'border-[#2c1d12] bg-[#1a120b]'}`}
@@ -43,8 +43,8 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                     d="M 90 90 L 90 10 L 10 10 L 10 90 Z M 10 10 L 90 90 M 90 10 L 10 90"
                     fill="none"
                     stroke={isCyber ? "#60A5FA" : "#d4af37"}
-                    strokeWidth={isCyber ? "1.2" : "0.8"}
-                    strokeOpacity={isCyber ? "0.4" : "0.2"}
+                    strokeWidth={isCyber ? "1.8" : "1.2"}
+                    strokeOpacity={isCyber ? "0.6" : "0.4"}
                     className={isCyber ? "drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]" : ""}
                 />
                 {previewPath.length > 0 && (
@@ -59,7 +59,7 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                         }
                         fill="none"
                         stroke={currentTeam.color}
-                        strokeWidth="3"
+                        strokeWidth="5"
                         strokeDasharray="4 4"
                         className="animate-[dash_1s_linear_infinite]"
                     />
@@ -82,10 +82,10 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                         key={id}
                         onClick={(e) => { e.stopPropagation(); onNodeClick(nodeId); }}
                         className={`absolute -translate-x-1/2 -translate-y-1/2 flex items-center justify-center transition-all cursor-pointer z-10 
-               ${!isSpecial ? (isCorner ? `w-[6%] h-[6%] rounded-2xl rotate-45 border-2 ${isCyber ? 'border-blue-400 bg-blue-900/40 shadow-[0_0_15px_rgba(96,165,250,0.5)]' : 'border-[#d4af37]/60 bg-[#1a120b]'}` : `w-[4.5%] h-[4.5%] rounded-full border-2 ${isCyber ? 'border-blue-500/30 bg-blue-950/60' : 'border-[#d4af37]/20 bg-[#1a120b]'}`) : ''} 
-               ${isEvent ? 'w-[18%] h-[18%] z-10 bg-transparent' : ''}
-               ${isTrial ? 'w-[18%] h-[18%] z-10 bg-transparent' : ''}
-               ${isSupport ? 'w-[22%] h-[22%] z-10 bg-transparent' : ''}
+               ${!isSpecial ? (isCorner ? `w-[6.5%] h-[6.5%] rounded-2xl rotate-45 border-2 ${isCyber ? 'border-blue-400 bg-blue-900/40 shadow-[0_0_15px_rgba(96,165,250,0.5)]' : 'border-[#d4af37]/60 bg-[#1a120b]'}` : `w-[5.5%] h-[5.5%] rounded-full border-2 ${isCyber ? 'border-blue-500/30 bg-blue-950/60' : 'border-[#d4af37]/20 bg-[#1a120b]'}`) : ''} 
+               ${isEvent ? 'w-[20%] h-[20%] z-10 bg-transparent' : ''}
+               ${isTrial ? 'w-[20%] h-[20%] z-10 bg-transparent' : ''}
+               ${isSupport ? 'w-[25%] h-[25%] z-10 bg-transparent' : ''}
                ${isTarget ? 'bg-white scale-[1.8] z-50 shadow-[0_0_40px_white] border-white animate-pulse' : 'hover:border-white/50'}`}
                         style={{ left: `${coord.x}%`, top: `${coord.y}%` }}
                     >
