@@ -39,13 +39,26 @@ export const YutBoard: React.FC<YutBoardProps> = ({
 
             {/* Path Lines */}
             <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
+                {/* Outer Border Path (dynamic based on coordinates) */}
                 <path
-                    d="M 90 90 L 90 10 L 10 10 L 10 90 Z M 10 10 L 90 90 M 90 10 L 10 90"
+                    d={`M ${NODE_COORDS[0].x} ${NODE_COORDS[0].y} 
+                       L ${NODE_COORDS[5].x} ${NODE_COORDS[5].y} 
+                       L ${NODE_COORDS[10].x} ${NODE_COORDS[10].y} 
+                       L ${NODE_COORDS[15].x} ${NODE_COORDS[15].y} Z`}
                     fill="none"
                     stroke={isCyber ? "#60A5FA" : "#d4af37"}
                     strokeWidth={isCyber ? "1.8" : "1.2"}
                     strokeOpacity={isCyber ? "0.6" : "0.4"}
                     className={isCyber ? "drop-shadow-[0_0_5px_rgba(96,165,250,0.8)]" : ""}
+                />
+                {/* Diagonal Lines */}
+                <path
+                    d={`M ${NODE_COORDS[10].x} ${NODE_COORDS[10].y} L ${NODE_COORDS[0].x} ${NODE_COORDS[0].y} 
+                       M ${NODE_COORDS[5].x} ${NODE_COORDS[5].y} L ${NODE_COORDS[15].x} ${NODE_COORDS[15].y}`}
+                    fill="none"
+                    stroke={isCyber ? "#60A5FA" : "#d4af37"}
+                    strokeWidth={isCyber ? "1.8" : "1.2"}
+                    strokeOpacity={isCyber ? "0.4" : "0.2"}
                 />
                 {previewPath.length > 0 && (
                     <polyline
@@ -59,7 +72,7 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                         }
                         fill="none"
                         stroke={currentTeam.color}
-                        strokeWidth="5"
+                        strokeWidth="4"
                         strokeDasharray="4 4"
                         className="animate-[dash_1s_linear_infinite]"
                     />
