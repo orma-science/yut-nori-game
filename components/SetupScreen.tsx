@@ -155,11 +155,20 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
                         <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-3xl">🤼</span>
-                                <label className={`text-2xl font-black ${isCyber ? 'text-blue-100' : 'text-gray-700'}`}>참여 팀 설정</label>
+                                <label className={`text-2xl font-black ${isCyber ? 'text-blue-200' : 'text-gray-700'}`}>참여 팀 설정</label>
                             </div>
                             <div className="flex gap-3">
                                 {[2, 3, 4].map(n => (
-                                    <button key={n} onClick={() => setTeamCount(n)} className={`flex-1 py-3 rounded-2xl text-2xl font-black border-4 transition-all ${teamCount === n ? 'bg-[#FFD700] border-white shadow-md' : 'bg-[#FFF9F0] text-gray-300 border-stone-50'}`}>{n}</button>
+                                    <button
+                                        key={n}
+                                        onClick={() => setTeamCount(n)}
+                                        className={`flex-1 py-4 rounded-2xl text-3xl font-black border-4 transition-all hover:scale-105 active:scale-95 shadow-sm
+                                            ${teamCount === n
+                                                ? (isCyber ? 'bg-blue-600 border-blue-300 text-white shadow-[0_0_20px_rgba(37,99,235,0.6)]' : 'bg-[#FFD700] border-white text-black scale-110 z-10 shadow-lg')
+                                                : (isCyber ? 'bg-blue-950/40 border-blue-900/50 text-blue-400 opacity-60 hover:opacity-100' : 'bg-[#fdf2e9] text-amber-900/60 border-orange-200/50 hover:bg-orange-100 hover:text-amber-900')}`}
+                                    >
+                                        {n}
+                                    </button>
                                 ))}
                             </div>
                         </div>
@@ -167,11 +176,20 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
                         <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-3xl">🏯</span>
-                                <label className={`text-2xl font-black ${isCyber ? 'text-blue-100' : 'text-gray-700'}`}>말 개수 설정</label>
+                                <label className={`text-2xl font-black ${isCyber ? 'text-blue-200' : 'text-gray-700'}`}>말 개수 설정</label>
                             </div>
                             <div className="flex gap-3">
                                 {[2, 3, 4, 5].map(n => (
-                                    <button key={n} onClick={() => setPieceCount(n)} className={`flex-1 py-3 rounded-2xl text-2xl font-black border-4 transition-all ${pieceCount === n ? 'bg-[#FFD700] border-white shadow-md' : 'bg-[#FFF9F0] text-gray-300 border-stone-50'}`}>{n}</button>
+                                    <button
+                                        key={n}
+                                        onClick={() => setPieceCount(n)}
+                                        className={`flex-1 py-4 rounded-2xl text-3xl font-black border-4 transition-all hover:scale-105 active:scale-95 shadow-sm
+                                            ${pieceCount === n
+                                                ? (isCyber ? 'bg-blue-600 border-blue-300 text-white shadow-[0_0_20px_rgba(37,99,235,0.6)]' : 'bg-[#FFD700] border-white text-black scale-110 z-10 shadow-lg')
+                                                : (isCyber ? 'bg-blue-950/40 border-blue-900/50 text-blue-400 opacity-60 hover:opacity-100' : 'bg-[#fdf2e9] text-amber-900/60 border-orange-200/50 hover:bg-orange-100 hover:text-amber-900')}`}
+                                    >
+                                        {n}
+                                    </button>
                                 ))}
                             </div>
                         </div>
@@ -179,11 +197,20 @@ export const SetupScreen: React.FC<SetupScreenProps> = ({
                         <div>
                             <div className="flex items-center gap-3 mb-2">
                                 <span className="text-3xl">🧧</span>
-                                <label className={`text-2xl font-black ${isCyber ? 'text-blue-100' : 'text-gray-700'}`}>이벤트 코너</label>
+                                <label className={`text-2xl font-black ${isCyber ? 'text-blue-200' : 'text-gray-700'}`}>이벤트 코너</label>
                             </div>
                             <div className="grid grid-cols-6 gap-2">
                                 {[0, 1, 2, 3, 4, 5].map(n => (
-                                    <button key={n} onClick={() => setEventCount(n)} className={`py-2 rounded-xl text-lg font-black border-2 transition-all ${eventCount === n ? 'bg-[#FFD700] border-white' : 'bg-[#FFF9F0] text-gray-300 border-stone-50'}`}>{n}</button>
+                                    <button
+                                        key={n}
+                                        onClick={() => setEventCount(n)}
+                                        className={`py-3 rounded-xl text-2xl font-black border-2 transition-all hover:scale-105 active:scale-95
+                                            ${eventCount === n
+                                                ? (isCyber ? 'bg-blue-600 border-blue-300 text-white shadow-lg' : 'bg-[#FFD700] border-white text-black scale-110 z-10')
+                                                : (isCyber ? 'bg-blue-950/40 border-blue-900/30 text-blue-400/70 hover:text-blue-300' : 'bg-[#fdf2e9] text-amber-900/40 border-orange-200/30 hover:bg-orange-100 hover:text-amber-900/80')}`}
+                                    >
+                                        {n}
+                                    </button>
                                 ))}
                             </div>
                         </div>
