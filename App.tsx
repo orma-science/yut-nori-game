@@ -263,7 +263,7 @@ const App: React.FC = () => {
                   fontSize: `${4 + gameState.comboCount}rem`
                 }}
               >
-                <div className="text-4xl opacity-80">{gameState.comboCount > 1 ? `${gameState.comboCount} 연속!` : "앗사!"}</div>
+                <div className="text-4xl opacity-80">{gameState.comboCount > 1 ? `${gameState.comboCount} 연속!` : "앗싸!"}</div>
                 <div>한 번 더! 🎲</div>
               </div>
             </div>
