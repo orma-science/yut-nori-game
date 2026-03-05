@@ -73,11 +73,11 @@ export const useYutGame = () => {
     }, []);
 
     const pushState = useCallback((nextState: GameState) => {
-        setStateStack(prev => [...prev, gameState].slice(-10));
+        setStateStack(prev => [...prev, gameState].slice(-30)); // 10회에서 30회로 확장
         setGameState(nextState);
     }, [gameState]);
 
-    const executeMove = useCallback((pid: string | 'new', target: number | 'GOAL', stateRef: GameState): Partial<GameState> => {
+    const executeMove = useCallback((pid: string | 'new', target: number | 'GOAL', stateRef: GameState): { updates: Partial<GameState>, caught: boolean } => {
         const team = stateRef.teams[stateRef.currentTeamIndex];
         let nextPieces = [...stateRef.pieces.map(p => ({ ...p }))];
         let nextTeams = [...stateRef.teams.map(t => ({ ...t }))];
@@ -130,10 +130,13 @@ export const useYutGame = () => {
             }
             historyMsg = `${team.name}: ${stack}동이가 완주하였습니다! 🏁`;
             return {
-                pieces: nextPieces,
-                teams: nextTeams,
-                history: [historyMsg, ...stateRef.history].slice(0, 30),
-                victoryTeamName: victoryName
+                updates: {
+                    pieces: nextPieces,
+                    teams: nextTeams,
+                    history: [historyMsg, ...stateRef.history].slice(0, 30),
+                    victoryTeamName: victoryName
+                },
+                caught: false
             };
         } else {
             const targetPos = target as number;
@@ -160,12 +163,15 @@ export const useYutGame = () => {
                         nextPieces.push({ id: `P-${Date.now()}`, teamId: team.id, position: targetPos, stackCount: 1 });
                         historyMsg = `${team.name}: 상대의 말을 잡아 한 번 더!`;
                         return {
-                            pieces: nextPieces,
-                            teams: nextTeams,
-                            history: [historyMsg, ...stateRef.history].slice(0, 30),
-                            screenShake: false,
-                            victoryTeamName: null,
-                            caughtPiece: caughtPieceData
+                            updates: {
+                                pieces: nextPieces,
+                                teams: nextTeams,
+                                history: [historyMsg, ...stateRef.history].slice(0, 30),
+                                screenShake: false,
+                                victoryTeamName: null,
+                                caughtPiece: caughtPieceData
+                            },
+                            caught: true
                         };
                     }
                 } else {
@@ -195,12 +201,15 @@ export const useYutGame = () => {
                             selfPiece.position = targetPos;
                             historyMsg = `${team.name}: 상대의 말을 잡았습니다!`;
                             return {
-                                pieces: nextPieces,
-                                teams: nextTeams,
-                                history: [historyMsg, ...stateRef.history].slice(0, 30),
-                                screenShake: false,
-                                victoryTeamName: null,
-                                caughtPiece: caughtPieceData
+                                updates: {
+                                    pieces: nextPieces,
+                                    teams: nextTeams,
+                                    history: [historyMsg, ...stateRef.history].slice(0, 30),
+                                    screenShake: false,
+                                    victoryTeamName: null,
+                                    caughtPiece: caughtPieceData
+                                },
+                                caught: true
                             };
                         }
                     } else {
@@ -212,11 +221,14 @@ export const useYutGame = () => {
         }
 
         return {
-            pieces: nextPieces,
-            teams: nextTeams,
-            history: [historyMsg, ...stateRef.history].slice(0, 30),
-            screenShake: false, // Point 4: 잡았을 때 흔들림 제거
-            victoryTeamName: null
+            updates: {
+                pieces: nextPieces,
+                teams: nextTeams,
+                history: [historyMsg, ...stateRef.history].slice(0, 30),
+                screenShake: false, // Point 4: 잡았을 때 흔들림 제거
+                victoryTeamName: null
+            },
+            caught: false
         };
     }, []);
 
@@ -228,7 +240,7 @@ export const useYutGame = () => {
                 if (!p) return {};
                 audioService.playRegret();
                 const target = calculateTargetNode(p.position, -2);
-                return executeMove(pid, target, state);
+                return executeMove(pid, target, state).updates;
             }
         },
         {
@@ -237,7 +249,7 @@ export const useYutGame = () => {
                 if (!p) return {};
                 audioService.playBoost();
                 const target = calculateTargetNode(p.position, 3);
-                return executeMove(pid, target, state);
+                return executeMove(pid, target, state).updates;
             }
         },
         {
@@ -416,11 +428,16 @@ export const useYutGame = () => {
         } else {
             nextState.pendingMoves.push(result);
             nextState.activeMoveIndex = nextState.pendingMoves.length - 1;
-            nextState.history = [`${team.name}: ${getYutLabel(result)}를 던졌습니다.`, ...gameState.history];
+            nextState.history = [`${team.name}: ${getYutLabel(result)}(을)를 던졌습니다.`, ...gameState.history];
 
-            // Point 8: 첫 번째 말은 자동 선택 ('말 올리기' 생략)
-            if (!hasOnBoard && nextState.pendingMoves.length === 1) {
-                nextState.selectedPieceId = 'new';
+            // 스마트 자동 선택 강화
+            const myPieces = gameState.pieces.filter(p => p.teamId === team.id);
+            if (nextState.pendingMoves.length === 1) {
+                if (myPieces.length === 0 && team.piecesAtHome > 0) {
+                    nextState.selectedPieceId = 'new'; // 판에 말이 없으면 자동으로 '말 올리기' 선택
+                } else if (myPieces.length === 1 && team.piecesAtHome === 0) {
+                    nextState.selectedPieceId = myPieces[0].id; // 판에 내 말이 하나뿐이고 집이 비었으면 자동 선택
+                }
             }
 
             // 윷이나 모가 나오면 보너스 배너 표시 및 콤보 증가
@@ -442,16 +459,14 @@ export const useYutGame = () => {
 
         const currentMoves = [...gameState.pendingMoves];
         const moveResult = currentMoves[gameState.activeMoveIndex];
-        const updates = executeMove(gameState.selectedPieceId!, target, gameState);
+        const { updates, caught: caughtEnemy } = executeMove(gameState.selectedPieceId!, target, gameState);
 
         const isTrial = target === gameState.specialNodes.hellNode;
         const isSupport = target === gameState.specialNodes.upNode;
         const isEvent = typeof target === 'number' && gameState.specialNodes.eventNodes.includes(target);
-        const historyMsg = updates.history?.[0] || "";
-        const caughtEnemy = historyMsg.includes("잡았습니다") || historyMsg.includes("한 번 더");
 
         const nextMoves = currentMoves.filter((_, i) => i !== gameState.activeMoveIndex);
-        let newState = { ...gameState, ...updates, isMoving: false, selectedPieceId: null };
+        let newState = { ...gameState, ...updates, isMoving: false, selectedPieceId: null, canRoll: caughtEnemy || gameState.canRoll };
 
         // 점프 애니메이션 시작
         const animatingId = gameState.selectedPieceId;
@@ -540,6 +555,16 @@ export const useYutGame = () => {
             newState.currentTeamIndex = nextIndex;
             newState.comboCount = 0; // 턴 전환 시 콤보 초기화
             newState.canRoll = true; // 다음 팀에게 던지기 권한 부여
+            newState.selectedPieceId = null; // 턴 전환 시 선택 해제
+        } else if (newState.pendingMoves.length > 0) {
+            // 기회가 남았을 때도 스마트 자동 선택 수행
+            const team = newState.teams[newState.currentTeamIndex];
+            const myPieces = newState.pieces.filter(p => p.teamId === team.id);
+            if (myPieces.length === 0 && team.piecesAtHome > 0) {
+                newState.selectedPieceId = 'new';
+            } else if (myPieces.length === 1 && team.piecesAtHome === 0) {
+                newState.selectedPieceId = myPieces[0].id;
+            }
         }
 
         // 게임 종료 체크: 한 팀 빼고 모두 완주했는가?

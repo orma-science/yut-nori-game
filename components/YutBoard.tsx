@@ -185,7 +185,14 @@ export const YutBoard: React.FC<YutBoardProps> = ({
                             style={{ pointerEvents: 'none' }}
                         >
                             <div
-                                onClick={(e) => { e.stopPropagation(); if (isCurrentTeam) onPieceClick(piece.id); }}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (typeof validTarget === 'number' && validTarget === piece.position) {
+                                        onNodeClick(piece.position);
+                                    } else if (isCurrentTeam) {
+                                        onPieceClick(piece.id);
+                                    }
+                                }}
                                 className={`w-full h-full flex items-center justify-center pointer-events-auto cursor-pointer
                                     ${isSelected ? 'scale-125 drop-shadow-[0_0_35px_white]' : 'hover:scale-110'}
                                     ${isAnimating ? 'animate-jump' : ''}`}
